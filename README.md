@@ -67,13 +67,6 @@ Risks: ['There might be budget overruns.']
 
 **Note:** The system includes intelligent fallback functionality. If the ADK agent encounters issues, it will automatically fall back to direct heuristic processing to ensure you always get results.
 
-### ADK Dev UI
-
-You can also run the agent via the ADK development UI for interactive testing.
-
-1. Ensure ADK is set up.
-2. Load the agent and provide a transcript prompt.
-
 ## Project Structure
 
 - `meeting_copilot/agent.py`: Main agent implementation with summarization logic
@@ -84,11 +77,15 @@ You can also run the agent via the ADK development UI for interactive testing.
 
 ## Features
 
-- **Heuristic Processing**: Extracts decisions, action items, owners, and risks using pattern matching
-- **ADK Integration**: Uses Google's Agent Development Kit for AI-powered processing
-- **Fallback System**: Automatically falls back to direct processing if ADK encounters issues
-- **CLI Interface**: Easy-to-use command line interface with API key management
+- **Heuristic Processing**: Extracts decisions, action items, owners, and risks using intelligent pattern matching
+- **Direct Processing**: Uses reliable direct analysis without external API dependencies
+- **CLI Interface**: Easy-to-use command line interface
 - **Error Handling**: Comprehensive error handling and user-friendly messages
+- **Pattern Recognition**: Identifies meeting elements using keyword patterns:
+  - Decisions: Lines starting with "Decision:"
+  - Action Items: Lines starting with "Action:"
+  - Owners: Names appearing before "will"
+  - Risks: Lines starting with "Risk:"
 
 ## License
 

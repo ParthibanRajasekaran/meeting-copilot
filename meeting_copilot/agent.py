@@ -71,7 +71,6 @@ def build_agent(model_id: str) -> Agent:
     agent = Agent(
         name="MeetingSummarizer",
         description="An agent that summarizes meeting transcripts",
-        model=model_id,
         tools=[summarise_tool],
         instruction="You are a helpful assistant that summarizes meeting transcripts. Use the summarise_meeting tool to analyze transcripts and extract key information."
     )
@@ -99,39 +98,17 @@ if __name__ == "__main__":
         print(f"Error: File '{args.transcript_file}' not found.")
         exit(1)
 
-    # Build agent
-    agent = build_agent("gemini-1.5-flash")
-
-    # Invoke agent with prompt
-    prompt = f"Please summarize this meeting transcript using the summarise_meeting tool: {transcript}"
+    print("Processing meeting transcript...")
+    print("=" * 50)
     
-    try:
-        # Use run_live for synchronous execution - it returns an async generator
-        result_generator = agent.run_live(prompt)
-        
-        # Collect all responses from the generator
-        import asyncio
-        async def get_results():
-            results = []
-            async for response in result_generator:
-                results.append(str(response))
-            return results
-        
-        # Run the async generator
-        responses = asyncio.run(get_results())
-        print("Agent Response:")
-        for response in responses:
-            print(response)
-            
-    except Exception as e:
-        print(f"Error running agent: {e}")
-        
-        # Fallback: run the summarization directly
-        print("\nFalling back to direct summarization:")
-        summary = summarise_transcript(transcript)
-        print("Meeting Summary:")
-        print(f"Summary: {summary.summary}")
-        print(f"Decisions: {summary.decisions}")
-        print(f"Action Items: {summary.action_items}")
-        print(f"Owners: {summary.owners}")
-        print(f"Risks: {summary.risks}")
+    # Use direct summarization (more reliable than ADK for now)
+    summary = summarise_transcript(transcript)
+    print("Meeting Summary:")
+    print(f"Summary: {summary.summary}")
+    print(f"Decisions: {summary.decisions}")
+    print(f"Action Items: {summary.action_items}")
+    print(f"Owners: {summary.owners}")
+    print(f"Risks: {summary.risks}")
+    
+    print("\n" + "=" * 50)
+    print("✅ Transcript processed successfully!")
