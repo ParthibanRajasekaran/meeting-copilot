@@ -1,0 +1,96 @@
+name: Manual Comprehensive Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of comprehensive test to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - ai-only
+        - performance
+
+jobs:
+  manual-comprehensive-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run selected test type
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        TEST_TYPE: ${{ inputs.test_type }}
+      run: |
+        echo "🧪 Running manual comprehensive test: $TEST_TYPE"
+
+        if [ "$TEST_TYPE" = "ai-only" ]; then
+          echo "🤖 Testing AI capabilities only..."
+          python -c "
+          from meeting_copilot.agent import build_agent, summarise_transcript
+          import os
+
+          transcript = '''Decision: Implement new feature. Action: John will code it. Risk: Timeline might slip. Sarah will test it.'''
+
+          print('Testing AI agent creation and basic functionality...')
+          if os.getenv('GOOGLE_API_KEY'):
+              agent = build_agent('gemini-1.5-flash', transcript)
+              print('✅ AI agent created successfully')
+              print('✅ Test completed with minimal API usage')
+          else:
+              print('❌ No API key available')
+              exit(1)
+          "
+
+        elif [ "$TEST_TYPE" = "performance" ]; then
+          echo "⚡ Running performance tests..."
+          python -c "
+          from meeting_copilot.agent import summarise_transcript
+          import time
+
+          # Test with larger transcript
+          with open('realistic_transcript.txt', 'r') as f:
+              transcript = f.read()
+
+          start_time = time.time()
+          result = summarise_transcript(transcript)
+          end_time = time.time()
+
+          print(f'✅ Performance test completed in {end_time - start_time:.2f} seconds')
+          print(f'📊 Extracted {len(result.decisions)} decisions, {len(result.action_items)} actions, {len(result.owners)} owners, {len(result.risks)} risks')
+          "
+
+        else
+          echo "🔄 Running full test suite..."
+          pytest tests/ -v --cov=meeting_copilot --cov-report=xml
+        fi
+
+    - name: Upload coverage to Codecov (if full test)
+      if: inputs.test_type == 'full'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: manual-comprehensive
+        name: codecov-manual
+        fail_ci_if_error: false
+
+    - name: Generate test report
+      run: |
+        echo "## 📋 Manual Test Report" >> $GITHUB_STEP_SUMMARY
+        echo "- **Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Test Type**: ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Completed" >> $GITHUB_STEP_SUMMARY

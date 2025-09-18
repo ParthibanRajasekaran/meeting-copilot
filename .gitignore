@@ -30,6 +30,18 @@ ENV/
 .env.local
 .env.production
 .env.staging
+.env.development
+
+# API Keys and Secrets (NEVER commit these!)
+*.key
+*.pem
+*secret*
+*token*
+*credential*
+google_api_key.txt
+api_key.txt
+secrets.json
+config/secrets.json
 
 # IDE
 .vscode/
@@ -38,3 +50,19 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+*.cover
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

@@ -1,0 +1,71 @@
+name: Monthly Comprehensive Test
+
+on:
+  schedule:
+    # Run on the 1st of every month at 09:00 UTC
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+    # Allow manual triggering from GitHub UI
+
+jobs:
+  comprehensive-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run comprehensive tests (with AI agent)
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      run: |
+        echo "🧪 Running comprehensive tests with AI agent..."
+        pytest tests/ -v --cov=meeting_copilot --cov-report=xml
+
+    - name: Test AI agent functionality
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      run: |
+        echo "🤖 Testing AI agent capabilities..."
+        # Test basic agent functionality (minimal API usage)
+        python -c "
+        from meeting_copilot.agent import build_agent, summarise_transcript
+        import os
+
+        # Test agent creation
+        transcript = 'Decision: Test decision. Action: Test action. Alice will handle it.'
+        summary = summarise_transcript(transcript)
+        print(f'✅ Heuristic processing works: {len(summary.decisions)} decisions found')
+
+        # Test agent building (but don't run to minimize costs)
+        if os.getenv('GOOGLE_API_KEY'):
+            agent = build_agent('gemini-1.5-flash', transcript)
+            print('✅ AI agent created successfully')
+        else:
+            print('⚠️  No API key - skipping AI agent test')
+        "
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: monthly-comprehensive
+        name: codecov-monthly
+        fail_ci_if_error: false
+
+    - name: Generate usage report
+      run: |
+        echo "## 📊 Monthly Test Report" >> $GITHUB_STEP_SUMMARY
+        echo "- **Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+        echo "- **AI Usage**: Minimal (agent creation test only)" >> $GITHUB_STEP_SUMMARY
