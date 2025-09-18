@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
-from google.adk import LlmAgent, FunctionTool
+from google.adk import Agent
+from google.adk.tools import FunctionTool
 import os
 import argparse
 
@@ -45,20 +46,35 @@ def summarise_transcript(transcript: str) -> MeetingSummary:
         risks=risks
     )
 
-def summarise_meeting(transcript: str) -> MeetingSummary:
+def summarise_meeting(transcript: str) -> str:
     """
     Function to be wrapped as ADK FunctionTool.
+    Returns a formatted string summary.
     """
-    return summarise_transcript(transcript)
+    result = summarise_transcript(transcript)
+    return f"""
+Meeting Summary:
+Summary: {result.summary}
+Decisions: {', '.join(result.decisions) if result.decisions else 'None'}
+Action Items: {', '.join(result.action_items) if result.action_items else 'None'}
+Owners: {', '.join(result.owners) if result.owners else 'None'}
+Risks: {', '.join(result.risks) if result.risks else 'None'}
+"""
 
 # Wrap as FunctionTool
-summarise_tool = FunctionTool.from_function(summarise_meeting)
+summarise_tool = FunctionTool(summarise_meeting)
 
-def build_agent(model_id: str) -> LlmAgent:
+def build_agent(model_id: str) -> Agent:
     """
-    Factory function to build LlmAgent with the summarise tool.
+    Factory function to build Agent with the summarise tool.
     """
-    agent = LlmAgent(model_id=model_id, tools=[summarise_tool])
+    agent = Agent(
+        name="MeetingSummarizer",
+        description="An agent that summarizes meeting transcripts",
+        model=model_id,
+        tools=[summarise_tool],
+        instruction="You are a helpful assistant that summarizes meeting transcripts. Use the summarise_meeting tool to analyze transcripts and extract key information."
+    )
     return agent
 
 if __name__ == "__main__":
@@ -76,20 +92,46 @@ if __name__ == "__main__":
     os.environ["GOOGLE_API_KEY"] = api_key
 
     # Read transcript
-    with open(args.transcript_file, 'r') as f:
-        transcript = f.read()
+    try:
+        with open(args.transcript_file, 'r') as f:
+            transcript = f.read()
+    except FileNotFoundError:
+        print(f"Error: File '{args.transcript_file}' not found.")
+        exit(1)
 
     # Build agent
-    agent = build_agent("gemini-1.5-flash")  # Assuming model_id for Gemini
+    agent = build_agent("gemini-1.5-flash")
 
     # Invoke agent with prompt
-    prompt = f"Summarize the following meeting transcript: {transcript}"
-    result = agent.run(prompt)
-
-    # Assuming result is the MeetingSummary from the tool
-    print("Meeting Summary:")
-    print(f"Summary: {result.summary}")
-    print(f"Decisions: {result.decisions}")
-    print(f"Action Items: {result.action_items}")
-    print(f"Owners: {result.owners}")
-    print(f"Risks: {result.risks}")
+    prompt = f"Please summarize this meeting transcript using the summarise_meeting tool: {transcript}"
+    
+    try:
+        # Use run_live for synchronous execution - it returns an async generator
+        result_generator = agent.run_live(prompt)
+        
+        # Collect all responses from the generator
+        import asyncio
+        async def get_results():
+            results = []
+            async for response in result_generator:
+                results.append(str(response))
+            return results
+        
+        # Run the async generator
+        responses = asyncio.run(get_results())
+        print("Agent Response:")
+        for response in responses:
+            print(response)
+            
+    except Exception as e:
+        print(f"Error running agent: {e}")
+        
+        # Fallback: run the summarization directly
+        print("\nFalling back to direct summarization:")
+        summary = summarise_transcript(transcript)
+        print("Meeting Summary:")
+        print(f"Summary: {summary.summary}")
+        print(f"Decisions: {summary.decisions}")
+        print(f"Action Items: {summary.action_items}")
+        print(f"Owners: {summary.owners}")
+        print(f"Risks: {summary.risks}")

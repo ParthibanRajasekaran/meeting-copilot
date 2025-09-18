@@ -1,0 +1,7 @@
+Meeting Transcript:
+
+John: Let's discuss the project timeline.
+Decision: We will extend the deadline by two weeks.
+Action: Sarah will update the documentation.
+Risk: There might be budget overruns.
+Alice will handle the testing.
