@@ -49,6 +49,24 @@ python -m meeting_copilot.agent path/to/transcript.txt --api-key "your-api-key-h
 
 The agent will process the transcript and print a structured summary including decisions, action items, owners, and risks.
 
+**Example:**
+
+```bash
+python -m meeting_copilot.agent sample_transcript.txt --api-key "your-key"
+```
+
+Output:
+```
+Meeting Summary:
+Summary: Overall summary of the meeting based on transcript.
+Decisions: ['We will extend the deadline by two weeks.']
+Action Items: ['Sarah will update the documentation.']
+Owners: ['Alice']
+Risks: ['There might be budget overruns.']
+```
+
+**Note:** The system includes intelligent fallback functionality. If the ADK agent encounters issues, it will automatically fall back to direct heuristic processing to ensure you always get results.
+
 ### ADK Dev UI
 
 You can also run the agent via the ADK development UI for interactive testing.
@@ -58,9 +76,19 @@ You can also run the agent via the ADK development UI for interactive testing.
 
 ## Project Structure
 
-- `meeting_copilot/agent.py`: Main agent implementation with summarization logic.
-- `requirements.txt`: Python dependencies.
-- `.gitignore`: Excludes cache, environment files, and virtual environments.
+- `meeting_copilot/agent.py`: Main agent implementation with summarization logic
+- `requirements.txt`: Python dependencies including google-adk
+- `sample_transcript.txt`: Simple example transcript for testing
+- `realistic_transcript.txt`: Complex example showing comprehensive extraction
+- `.gitignore`: Excludes cache, environment files, and virtual environments
+
+## Features
+
+- **Heuristic Processing**: Extracts decisions, action items, owners, and risks using pattern matching
+- **ADK Integration**: Uses Google's Agent Development Kit for AI-powered processing
+- **Fallback System**: Automatically falls back to direct processing if ADK encounters issues
+- **CLI Interface**: Easy-to-use command line interface with API key management
+- **Error Handling**: Comprehensive error handling and user-friendly messages
 
 ## License
 
